@@ -95,10 +95,10 @@ class StemAndSteinParser(BaseTapListProvider):
             manufacturer = ' '.join(words[:index])
             if not use_contains:
                 try:
-                    return Manufacturer.objects.get(
+                    return Manufacturer.objects.filter(
                         Q(name__iexact=manufacturer) |
                         Q(alternate_names__name__iexact=manufacturer)
-                    )
+                    ).distinct().get()
                 except Manufacturer.DoesNotExist:
                     continue
             filter_str = 'icontains' if use_contains else 'istartswith'
@@ -146,6 +146,29 @@ class StemAndSteinParser(BaseTapListProvider):
         price = Decimal(pricing_div.text[1:])
         image_url = image_div.find('img').attrs['src']
         image_params = dict(parse_qsl(image_url.split('?')[-1]))
+        abv_div = jumbotron.find(
+            'div',
+            {
+                'style': 'color:slategray; font-size:18px;padding-left:20px',
+            },
+        )
+        if not beer.abv:
+            if 'ABV' in abv_div.text:
+                # ABV x.y% (a bunch of spaces) city, state
+                try:
+                    abv = Decimal(abv_div.text.split()[1][:-1])
+                except ValueError:
+                    LOG.warning('Invalid S&S ABV %s for beer %s', abv_div.text, beer)
+                else:
+                    LOG.debug('Setting ABV for beer %s to %s%%', beer, abv)
+                    beer.abv = abv
+                    beer.save()
+        if not beer.manufacturer.location:
+            raw_text = abv_div.text.replace('&nbsp;', '')
+            percent_index = raw_text.index('%')
+            beer.manufacturer.location = raw_text[percent_index + 1:].strip()
+            LOG.debug('Setting beer %s location to %s', beer, beer.manufacturer.location)
+            beer.manufacturer.save()
         try:
             color = self.html_parser.unescape(image_params['color'])
         except KeyError:
@@ -173,6 +196,8 @@ class StemAndSteinParser(BaseTapListProvider):
         existing_taps = {
             i.tap_number: i for i in venue.taps.all()
         }
+        LOG.debug('existing taps %s', existing_taps)
+        taps_hit = []
         for tap_number, beer in taps.items():
             self.fill_in_beer_details(beer)
             try:
@@ -184,3 +209,10 @@ class StemAndSteinParser(BaseTapListProvider):
                 )
             tap.beer = beer
             tap.save()
+            taps_hit.append(tap.tap_number)
+        LOG.debug('Deleting all taps except %s', taps_hit)
+        Tap.objects.filter(
+            venue=venue,
+        ).exclude(
+            tap_number__in=taps_hit,
+        ).delete()

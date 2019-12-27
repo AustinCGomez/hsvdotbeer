@@ -96,6 +96,9 @@ class BaseTapListProvider():
         if name == '-':
             # bogus untappd style
             return None
+        if name.startswith('None - '):
+            # strip untappd noise
+            name = name[7:]
         try:
             return self.styles[name.casefold()]
         except KeyError:
@@ -108,7 +111,7 @@ class BaseTapListProvider():
                 try:
                     style = Style.objects.get(alternate_names__name=name)
                 except Style.DoesNotExist:
-                    style = Style.objects.create(name=name)
+                    style = Style.objects.create(name=name, default_color='')
         self.styles[name.casefold()] = style
         return style
 
@@ -181,16 +184,26 @@ class BaseTapListProvider():
             defaults['abv'] = abv
         if not beer:
             try:
-                beer = Beer.objects.get(
+                beer = Beer.objects.filter(
                     Q(name=name) | Q(alternate_names__name=name),
                     manufacturer=manufacturer,
-                )
+                ).distinct().get()
             except Beer.DoesNotExist:
                 beer = Beer.objects.create(
                     name=name,
                     manufacturer=manufacturer,
                     **defaults,
                 )
+            except Beer.MultipleObjectsReturned:
+                LOG.error(
+                    'Found duplicate results for name %s from mfg %s!',
+                    name, manufacturer,
+                )
+                # just take the first one
+                beer = Beer.objects.filter(
+                    Q(name=name) | Q(alternate_names__name=name),
+                    manufacturer=manufacturer,
+                )[0]
         needs_update = False
         if beer.logo_url and beer.logo_url == manufacturer.logo_url:
             beer.logo_url = None
@@ -247,6 +260,7 @@ class BaseTapListProvider():
         if pricing:
             if not venue:
                 raise ValueError('You must specify a venue with a price')
+            beer.prices.filter(venue=venue).delete()
             for price_info in pricing:
                 if price_info['price'] > 500:
                     LOG.warning(
@@ -265,11 +279,11 @@ class BaseTapListProvider():
                     )[0]
                     serving_sizes[price_info['volume_oz']] = serving_size
                 try:
-                    BeerPrice.objects.update_or_create(
+                    BeerPrice.objects.create(
                         serving_size=serving_size,
                         beer=beer,
                         venue=venue,
-                        defaults={'price': price_info['price']}
+                        price=price_info['price'],
                     )
                 except InvalidOperation:
                     LOG.error(

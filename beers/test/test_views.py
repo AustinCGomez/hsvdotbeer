@@ -1,3 +1,8 @@
+import json
+from decimal import Decimal
+
+from dateutil.relativedelta import relativedelta
+from django.utils.timezone import now
 from django.urls import reverse
 from nose.tools import eq_
 from rest_framework.test import APITestCase
@@ -5,8 +10,11 @@ from faker import Faker
 
 from hsv_dot_beer.users.test.factories import UserFactory
 from taps.test.factories import TapFactory
+from taps.models import Tap
+from beers.models import Beer
 from beers.serializers import ManufacturerSerializer
-from .factories import ManufacturerFactory, BeerFactory
+from venues.test.factories import VenueFactory
+from .factories import ManufacturerFactory, BeerFactory, StyleFactory
 
 fake = Faker()
 
@@ -62,7 +70,8 @@ class ManufacturerDetailTestCase(APITestCase):
 
 class BeerDetailTestCase(APITestCase):
     def setUp(self):
-        self.beer = BeerFactory()
+        self.style = StyleFactory()
+        self.beer = BeerFactory(style=self.style)
         self.url = reverse(
             'beer-detail', kwargs={'pk': self.beer.pk},
         )
@@ -70,6 +79,11 @@ class BeerDetailTestCase(APITestCase):
         self.client.credentials(
             HTTP_AUTHORIZATION=f'Token {self.user.auth_token}'
         )
+
+    def test_style_embedded(self):
+        response = self.client.get(self.url)
+        eq_(response.status_code, 200)
+        eq_(response.data['style']['default_color'], self.style.default_color)
 
     def test_patch(self):
         data = {
@@ -155,3 +169,88 @@ class BeerListTestCase(APITestCase):
         eq_(response.status_code, 200)
         eq_(len(response.data['results']), 1, response.data)
         eq_(response.data['results'][0]['name'], self.beer.name, response.data)
+
+    def test_sort_by_time_added(self):
+        # create a tap for a second beer in between the two
+        other_beer = BeerFactory()
+        TapFactory(
+            beer=other_beer,
+            time_added=now() - relativedelta(hours=5, minutes=2),
+        )
+        # create another beer on tap with no time added, so therefore it's now
+        third_beer = TapFactory(beer=BeerFactory()).beer
+
+        # create two taps for the first beer
+        TapFactory(beer=self.beer, time_added=now() - relativedelta(hours=1))
+        TapFactory(beer=self.beer, time_added=now() - relativedelta(hours=16))
+
+        # 5 queries:
+        # 1. count of results
+        # 2. beers
+        # 3. taps
+        # 4. alt names
+        # 5. prices
+        with self.assertNumQueries(5):
+            response = self.client.get(f'{self.url}?o=-most_recently_added')
+        eq_(response.status_code, 200)
+        # expected order is third_beer, self.beer, other_beer
+        eq_(len(response.data['results']), 3, response.data)
+        eq_(response.data['results'][0]['name'], third_beer.name, response.data)
+        eq_(response.data['results'][1]['name'], self.beer.name, response.data)
+        eq_(response.data['results'][2]['name'], other_beer.name, response.data)
+
+    def test_filter_by_venue_slug(self):
+        wanted_venue = VenueFactory(slug='slug-1')
+        other_venue = VenueFactory(slug='not-this')
+        mfg = ManufacturerFactory()
+        beers = Beer.objects.bulk_create(
+            BeerFactory.build(manufacturer=mfg) for dummy in range(3)
+        )
+        # set up 3 beers on tap, two at the one we want to look for, one at
+        # the other
+        Tap.objects.bulk_create(
+            TapFactory.build(beer=beer, venue=venue)
+            for beer, venue in zip(
+                beers, [wanted_venue, wanted_venue, other_venue],
+            )
+        )
+        url = f'{self.url}?taps__venue__slug__icontains=SLUG&on_tap=True'
+        with self.assertNumQueries(4):
+            response = self.client.get(url)
+        eq_(response.status_code, 200, response.data)
+        eq_(len(response.data['results']), 2, json.dumps(response.data, indent=2))
+        eq_(set(i['id'] for i in response.data['results']), set(i.id for i in beers[:-1]))
+
+    def test_sort_abv_ascending(self):
+        venue = VenueFactory()
+        mfg = ManufacturerFactory()
+        beers = Beer.objects.bulk_create([
+            BeerFactory.build(manufacturer=mfg, abv=None),
+            BeerFactory.build(manufacturer=mfg, abv=Decimal('3.2'))
+        ])
+        Tap.objects.bulk_create(
+            TapFactory.build(beer=beer, venue=venue) for beer in beers
+        )
+        url = f'{self.url}?o=abv&on_tap=True'
+        with self.assertNumQueries(4):
+            response = self.client.get(url)
+        eq_(response.status_code, 200, response.data)
+        eq_(len(response.data['results']), 2, json.dumps(response.data, indent=2))
+        eq_(list(i['id'] for i in response.data['results']), [i.id for i in beers])
+
+    def test_sort_abv_descending(self):
+        venue = VenueFactory()
+        mfg = ManufacturerFactory()
+        beers = Beer.objects.bulk_create([
+            BeerFactory.build(manufacturer=mfg, abv=None),
+            BeerFactory.build(manufacturer=mfg, abv=Decimal('3.2'))
+        ])
+        Tap.objects.bulk_create(
+            TapFactory.build(beer=beer, venue=venue) for beer in beers
+        )
+        url = f'{self.url}?o=-abv&on_tap=True'
+        with self.assertNumQueries(4):
+            response = self.client.get(url)
+        eq_(response.status_code, 200, response.data)
+        eq_(len(response.data['results']), 2, json.dumps(response.data, indent=2))
+        eq_(list(i['id'] for i in response.data['results']), [i.id for i in reversed(beers)])

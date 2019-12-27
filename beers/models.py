@@ -5,6 +5,7 @@ from django.db import models, transaction
 from django.db.utils import IntegrityError
 from django.utils.timezone import now
 
+from taps.models import Tap
 from .utils import render_srm
 
 LOG = logging.getLogger(__name__)
@@ -12,6 +13,11 @@ LOG = logging.getLogger(__name__)
 
 class Style(models.Model):
     name = CITextField(unique=True)
+    default_color = models.CharField(
+        'HTML color (in hex) to use if the beer has no known color',
+        max_length=9,  # #00112233 -> RGBA
+        blank=True,
+    )
 
     def merge_from(self, other_styles):
         alt_names = []
@@ -95,9 +101,9 @@ class Manufacturer(models.Model):
                     # good
                     beer.save()
 
-            for alternate_name in other.alternate_names.all():
-                alternate_name.beer = self
-                alternate_name.save()
+            ManufacturerAlternateName.objects.filter(
+                manufacturer=other,
+            ).update(manufacturer=self)
             excluded_fields = {
                 'name', 'automatic_updates_blocked', 'id', 'time_first_seen',
             }
@@ -173,6 +179,7 @@ class Beer(models.Model):
         blank=True, null=True, unique=True,
     )
     time_first_seen = models.DateTimeField(blank=True, null=True, default=now)
+    tweeted_about = models.BooleanField(default=False, db_index=True)
 
     def save(self, *args, **kwargs):
         # force empty IDs to null to avoid running afoul of unique constraints
@@ -199,12 +206,24 @@ class Beer(models.Model):
     def merge_from(self, other):
         LOG.info('merging %s into %s', other, self)
         with transaction.atomic():
-            for tap in other.taps.all():
-                tap.beer = self
-                tap.save()
-            for alternate_name in other.alternate_names.all():
-                alternate_name.beer = self
-                alternate_name.save()
+            Tap.objects.filter(beer=other).update(beer=self)
+            BeerAlternateName.objects.filter(beer=other).update(beer=self)
+            try:
+                with transaction.atomic():
+                    BeerPrice.objects.filter(beer=other).update(beer=self)
+            except IntegrityError:
+                LOG.warning('Duplicate prices detected for %s', self)
+                prices_updated = BeerPrice.objects.filter(beer=other).exclude(
+                    venue__in=models.Subquery(
+                        BeerPrice.objects.filter(beer=self).values('venue')
+                    ),
+                ).update(beer=self)
+                prices_deleted = BeerPrice.objects.filter(beer=other).delete()
+                LOG.info(
+                    'Updated %s prices and deleted %s prices',
+                    prices_updated,
+                    prices_deleted,
+                )
             excluded_fields = {
                 'name' 'in_production', 'automatic_updates_blocked',
                 'manufacturer', 'id', 'time_first_seen',
@@ -271,7 +290,7 @@ class ServingSize(models.Model):
 class BeerPrice(models.Model):
     beer = models.ForeignKey(Beer, models.CASCADE, related_name='prices')
     venue = models.ForeignKey(
-        'venues.Venue', models.DO_NOTHING, related_name='beer_prices',
+        'venues.Venue', models.CASCADE, related_name='beer_prices',
     )
     serving_size = models.ForeignKey(
         ServingSize, models.DO_NOTHING, related_name='beer_prices',

@@ -1,11 +1,12 @@
 """Test the parsing of stem and stein data"""
 import os
+from decimal import Decimal
 
 from django.core.management import call_command
 from django.test import TestCase
 import responses
 
-from beers.models import Beer, Manufacturer
+from beers.models import Beer, Manufacturer, ManufacturerAlternateName
 from beers.test.factories import ManufacturerFactory
 from venues.test.factories import VenueFactory
 from venues.models import Venue, VenueAPIConfiguration
@@ -61,6 +62,10 @@ class CommandsTestCase(TestCase):
         self.assertEqual(Venue.objects.count(), 1)
         self.assertFalse(Beer.objects.exists())
         self.assertFalse(Manufacturer.objects.exists())
+        deleted_tap = Tap.objects.create(
+            venue=self.venue,
+            tap_number=3000,
+        )
         for dummy in range(2):
             # running twice to make sure we're not double-creating
             args = []
@@ -74,13 +79,15 @@ class CommandsTestCase(TestCase):
             taps = Tap.objects.filter(
                 venue=self.venue, tap_number__in=[1, 17],
             ).select_related(
-                'beer__style',
+                'beer__style', 'beer__manufacturer',
             ).order_by('tap_number')
             tap = taps[0]
             self.assertTrue(
                 tap.beer.name.endswith('Space Blood Orange Cider'),
                 tap.beer.name,
             )
+            self.assertEqual(tap.beer.manufacturer.location, 'Sebastopol, CA')
+            self.assertEqual(tap.beer.abv, Decimal('6.9'))
             self.assertEqual(tap.beer.stem_and_stein_pk, 967)
             prices = list(tap.beer.prices.all())
             self.assertEqual(len(prices), 1)
@@ -93,11 +100,13 @@ class CommandsTestCase(TestCase):
                 tap.beer.name.endswith('Karmeliet'),
                 tap.beer.name,
             )
+            self.assertEqual(tap.beer.manufacturer.location, 'Belgium')
             prices = list(tap.beer.prices.all())
             self.assertEqual(len(prices), 1)
             price = prices[0]
             self.assertEqual(price.price, 8)
             self.assertEqual(price.serving_size.volume_oz, 10)
+            self.assertFalse(Tap.objects.filter(id=deleted_tap.id).exists())
 
     def test_guess_manufacturer_good_people(self):
         mfg_names = [
@@ -139,3 +148,13 @@ class CommandsTestCase(TestCase):
         guessed = parser.guess_manufacturer('Goat Island Sipsey River Red Ale')
         self.assertEqual(guessed.name, 'Goat Island', guessed)
         self.assertIn(guessed, manufacturers)
+
+    def test_guess_manufacturer_back_forty(self):
+        mfg = ManufacturerFactory(name='Back Forty')
+        ManufacturerAlternateName.objects.bulk_create(
+            ManufacturerAlternateName(name=name, manufacturer=mfg)
+            for name in ['Back Forty', 'Back Forty Beer Co']
+        )
+        parser = StemAndSteinParser()
+        guessed = parser.guess_beer('Back Forty Truck Stop Honey Brown')
+        self.assertEqual(guessed.manufacturer, mfg)

@@ -27,7 +27,7 @@ LOG = logging.getLogger(__name__)
 class DigitalPourParser(BaseTapListProvider):
     """Parser for DigitalPour based vendors."""
 
-    URL = 'https://mobile.digitalpour.com/DashboardServer/v4/MobileApp/MenuItems/{}/{}/Tap?ApiKey={}'
+    URL = 'https://mobile.digitalpour.com/DashboardServer/v4/MobileApp/MenuItems/{}/{}/Tap?ApiKey={}'  # noqa
     APIKEY = '574725e55e002c0b7cf0cf19'
     provider_name = 'digitalpour'
 
@@ -67,10 +67,11 @@ class DigitalPourParser(BaseTapListProvider):
             try:
                 manufacturer = manufacturers[parsed_manufacturer['name']]
             except KeyError:
-                defaults = {}
-                for field in ['location', 'logo_url', 'twitter_handle']:
-                    if parsed_manufacturer[field]:
-                        defaults[field] = parsed_manufacturer[field]
+                defaults = {
+                    field: parsed_manufacturer[field] for field in [
+                        'location', 'logo_url', 'twitter_handle', 'url',
+                    ] if parsed_manufacturer[field]
+                }
                 manufacturer = self.get_manufacturer(
                     name=parsed_manufacturer['name'],
                     **defaults,
@@ -91,6 +92,13 @@ class DigitalPourParser(BaseTapListProvider):
                 'looking up beer: name %s, mfg %s, other data %s',
                 name, manufacturer, parsed_beer,
             )
+            if name.casefold().strip() == 'N/A'.casefold():
+                if not parsed_beer.get('abv'):
+                    # it's an empty tap
+                    LOG.info('Tap %s is unused', tap.tap_number)
+                    tap.beer = None
+                    tap.save()
+                    continue
             beer = self.get_beer(
                 name, manufacturer, pricing=self.parse_pricing(entry),
                 venue=venue, **parsed_beer,
@@ -151,6 +159,18 @@ class DigitalPourParser(BaseTapListProvider):
                 'rate_beer_url': b.get('RateBeerUrl'),
                 'manufacturer_url': b.get('BeerUrl'),
             }
+        elif 'HardSeltzer' in b['$type']:
+            beer = {
+                'name': b['HardSeltzerName'],
+                'style': b['HardSeltzerStyle']['StyleName'],
+                'abv': b['Abv'],
+                'ibu': b.get('Ibu', 0),
+                'color': hex(b['StyleColor']),
+                'logo_url': b.get('LogoImageUrl'),
+                'beer_advocate_url': b.get('BeerAdvocateUrl'),
+                'rate_beer_url': b.get('RateBeerUrl'),
+                'manufacturer_url': b.get('BeerUrl'),
+            }
         else:
             beer = {
                 'name': b['BeerName'],
@@ -169,7 +189,10 @@ class DigitalPourParser(BaseTapListProvider):
         """Parse manufacturer info from JSON entry."""
         producer = tap['MenuItemProductDetail']['Beverage']['BeverageProducer']
 
-        styles = ['Cidery', 'Meadery', 'Winery', 'KombuchaMaker', 'Brewery']
+        styles = [
+            'Cidery', 'Meadery', 'Winery', 'KombuchaMaker', 'Brewery', 'HardSeltzerMaker',
+        ]
+        url = ''
         for style in styles:
             try:
                 name = producer[f'{style}Name']
@@ -177,6 +200,7 @@ class DigitalPourParser(BaseTapListProvider):
                 # try the next one
                 continue
             else:
+                url = producer.get(f'{style}Url', '') or ''
                 # success
                 break
         else:
@@ -187,11 +211,18 @@ class DigitalPourParser(BaseTapListProvider):
             'location': producer['Location'] or '',
             'logo_url': producer.get('LogoImageUrl'),
             'twitter_handle': producer.get('TwitterName') or '',
+            'url': url,
         }
-        if manufacturer['twitter_handle'] and manufacturer[
-                'twitter_handle'].startswith('@'):
-            # strip the leading @ for consistency
-            manufacturer['twitter_handle'] = manufacturer['twitter_handle'][1:]
+        if manufacturer['url'] and not manufacturer['url'].casefold().startswith(
+            'http'.casefold()
+        ):
+            manufacturer['url'] = f'http://{manufacturer["url"]}'
+        if manufacturer['twitter_handle']:
+            if manufacturer['twitter_handle'].startswith('@'):
+                # strip the leading @ for consistency
+                manufacturer['twitter_handle'] = manufacturer['twitter_handle'][1:]
+            if '/' in manufacturer['twitter_handle']:
+                manufacturer['twitter_handle'] = manufacturer['twitter_handle'].rsplit('/', 1)[-1]
         LOG.debug(
             'Got twitter name %s from producer %s',
             manufacturer['twitter_handle'], producer,
@@ -214,6 +245,8 @@ class DigitalPourParser(BaseTapListProvider):
         pricing = []
         prices = tap['MenuItemProductDetail']['Prices']
         for price in prices:
+            if not price.get('DisplayOnMenu'):
+                continue
             p = {
                 'volume_oz': Decimal(price['DisplaySize']),
                 # 6oz --> 6 oz

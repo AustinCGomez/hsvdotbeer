@@ -14,7 +14,6 @@ class Venue(models.Model):
         ('untappd', 'Untappd'),
         ('digitalpour', 'DigitalPour'),
         ('taphunter', 'TapHunter'),
-        ('nook_html', 'The Nook\'s static HTML'),
         ('manual', 'Chalkboard/Whiteboard'),
         ('', 'Unknown'),
         ('test', 'TEST LOCAL PROVIDER'),
@@ -43,6 +42,19 @@ class Venue(models.Model):
     phone_number = models.CharField(max_length=50, blank=True)
     logo_url = models.URLField(blank=True)
     slug = models.SlugField()
+    on_downtown_craft_beer_trail = models.BooleanField(default=False)
+    # -90 to +90
+    latitude = models.DecimalField(
+        max_digits=10, decimal_places=8, blank=True, null=True,
+    )
+    # -180 to 180
+    longitude = models.DecimalField(
+        max_digits=11, decimal_places=8, blank=True, null=True,
+    )
+    twitter_short_location_description = models.CharField(
+        'Short location description for this specific location for use on '
+        'Twitter', max_length=25, blank=True,
+    )
 
     def __str__(self):
         return self.name
@@ -67,5 +79,11 @@ class VenueAPIConfiguration(models.Model):
         null=True,
     )
     taphunter_location = models.CharField(max_length=50, blank=True)
+    taphunter_excluded_lists = ArrayField(
+        models.CharField(max_length=50),
+        default=list,
+        blank=True,
+        null=True,
+    )
     taplist_io_display_id = models.CharField(max_length=50, blank=True)
     taplist_io_access_code = models.CharField(max_length=50, blank=True)

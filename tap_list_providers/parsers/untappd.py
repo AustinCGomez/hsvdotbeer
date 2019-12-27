@@ -94,7 +94,12 @@ class UntappdParser(BaseTapListProvider):
             beer_name = tap_info['beer'].pop('name')
             style = tap_info['beer'].pop('style', {})
             if style:
-                tap_info['beer']['style'] = f"{style['category']} - {style['name']}"
+                if style['category']:
+                    tap_info['beer'][
+                        'style'
+                    ] = f"{style['category']} - {style['name']}"
+                else:
+                    tap_info['beer']['style'] = style['name']
             beer = self.get_beer(
                 beer_name, manufacturer, venue=venue,
                 pricing=tap_info['pricing'],
@@ -186,9 +191,9 @@ class UntappdParser(BaseTapListProvider):
         else:
             url = None
 
-        beer_style = entry.find('span', {'class': 'beer-style'}).text
+        beer_style = entry.find('span', {'class': 'beer-style'}).text.strip()
         brewery_span = entry.find('span', {'class': 'brewery'})
-        brewery = brewery_span.text
+        brewery = brewery_span.text.strip()
         brewery_url = brewery_span.find('a').attrs['href']
 
         location_span = entry.find('span', {'class': 'location'})
@@ -200,17 +205,17 @@ class UntappdParser(BaseTapListProvider):
         beer_info = beer_info.replace(tap_num, '')
         beer_info = beer_info.replace(beer_style, '')
         beer_info = beer_info.strip()
+        if not beer_info or beer_info == brewery:
+            beer_info = f'{brewery} {beer_style}'
 
         t = {
-            'beer':
-            {
+            'beer': {
                 'name': beer_info,
                 'untappd_url': url,
                 'style': self.parse_style(beer_style),
                 'logo_url': beer_image,
             },
-            'manufacturer':
-            {
+            'manufacturer': {
                 'name': brewery,
                 'location': loc,
                 'untappd_url': brewery_url,
