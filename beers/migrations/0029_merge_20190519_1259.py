@@ -4,11 +4,9 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('beers', '0028_auto_20190514_1914'),
-        ('beers', '0028_style_default_color'),
+        ("beers", "0028_auto_20190514_1914"),
+        ("beers", "0028_style_default_color"),
     ]
 
-    operations = [
-    ]
+    operations = []

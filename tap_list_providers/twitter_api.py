@@ -1,11 +1,11 @@
 from twitter.api import Api, CHARACTER_LIMIT
+from twitter.models import Status
 
 
 class ThreadedApi(Api):
-
     def PostUpdates(
-        self, status, continuation=None, threaded=False, **kwargs
-    ):
+        self, status: str, continuation: str = "", threaded: bool = False, **kwargs
+    ) -> list[Status]:
         """Post one or more twitter status messages from the authenticated user.
         Unlike api.PostUpdate, this method will post multiple status updates
         if the message is longer than CHARACTER_LIMIT characters.
@@ -28,12 +28,11 @@ class ThreadedApi(Api):
         """
         results = list()
 
-        if continuation is None:
-            continuation = ''
         char_limit = CHARACTER_LIMIT - len(continuation)
 
         tweets = self.split_tweet_by_lines(
-            tweet=status, character_limit=char_limit,
+            tweet=status,
+            character_limit=char_limit,
         )
 
         if len(tweets) == 1:
@@ -45,22 +44,22 @@ class ThreadedApi(Api):
                 # use the not none check here so we don't override the caller
                 # if they're tweeting a series of updates in response to
                 # an existing status
-                kwargs['in_reply_to_status_id'] = last_reply_to_id
+                kwargs["in_reply_to_status_id"] = last_reply_to_id
             latest_tweet = self.PostUpdate(status=tweet + continuation, **kwargs)
             last_reply_to_id = latest_tweet.id
             results.append(latest_tweet)
 
         if threaded:
-            kwargs['in_reply_to_status_id'] = last_reply_to_id
+            kwargs["in_reply_to_status_id"] = last_reply_to_id
         results.append(self.PostUpdate(status=tweets[-1], **kwargs))
 
         return results
 
-    def split_tweet_by_lines(self, tweet, character_limit):
+    def split_tweet_by_lines(self, tweet: str, character_limit: int) -> list[str]:
         """Break the thread up by lines if possible"""
-        lines = tweet.split('\r\n')
+        lines = tweet.splitlines()
         tweets = []
-        current_tweet = ''
+        current_tweet = ""
 
         for line in lines:
             if len(line) > character_limit:
@@ -69,7 +68,7 @@ class ThreadedApi(Api):
                 # and then use upstream's method to split up this line
                 if current_tweet:
                     tweets.append(current_tweet)
-                    current_tweet = ''
+                    current_tweet = ""
                 split = self._TweetTextWrap(line, char_lim=character_limit)
                 # and then take whatever it gave us
                 # as a series of tweets
@@ -77,17 +76,15 @@ class ThreadedApi(Api):
                 # keep the last line as the start of our next tweet
                 current_tweet = split[-1]
                 continue
-            if len(line) + len(current_tweet) >= character_limit:
+            potential_next_msg = f"{current_tweet}\r\n{line}" if current_tweet else line
+            if len(potential_next_msg) >= character_limit:
                 # next tweet!
                 if current_tweet:
                     tweets.append(current_tweet)
                 current_tweet = line
                 continue
             # add the next line to the currently being built tweet
-            if current_tweet:
-                current_tweet = f'{current_tweet}\r\n{line}'
-            else:
-                current_tweet = line
+            current_tweet = potential_next_msg
         if current_tweet:
             # if we have anything left over, tack it on!
             tweets.append(current_tweet)

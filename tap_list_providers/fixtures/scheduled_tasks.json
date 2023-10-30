@@ -1,12 +1,5 @@
 [
 {
-  "model": "django_celery_beat.periodictasks",
-  "pk": 1,
-  "fields": {
-    "last_update": "2019-08-26T21:56:38.129Z"
-  }
-},
-{
   "model": "django_celery_beat.periodictask",
   "pk": 1,
   "fields": {
@@ -24,12 +17,13 @@
     "headers": "{}",
     "priority": null,
     "expires": null,
+    "expire_seconds": 43200,
     "one_off": false,
     "start_time": null,
     "enabled": true,
-    "last_run_at": "2019-08-26T21:47:37.745Z",
-    "total_run_count": 9,
-    "date_changed": "2019-08-26T21:53:30.492Z",
+    "last_run_at": "2020-11-20T12:37:11.910Z",
+    "total_run_count": 85,
+    "date_changed": "2020-11-20T12:38:30.177Z",
     "description": ""
   }
 },
@@ -51,12 +45,13 @@
     "headers": "{}",
     "priority": null,
     "expires": null,
+    "expire_seconds": null,
     "one_off": false,
     "start_time": "2019-02-16T21:39:37Z",
     "enabled": true,
-    "last_run_at": "2019-08-26T21:47:37.769Z",
-    "total_run_count": 113,
-    "date_changed": "2019-08-26T21:48:43.068Z",
+    "last_run_at": "2020-11-20T14:00:10.109Z",
+    "total_run_count": 528,
+    "date_changed": "2020-11-20T14:00:30.137Z",
     "description": "Parse beers from untappd"
   }
 },
@@ -78,12 +73,13 @@
     "headers": "{}",
     "priority": null,
     "expires": null,
+    "expire_seconds": null,
     "one_off": false,
     "start_time": "2019-02-16T21:40:29Z",
     "enabled": true,
-    "last_run_at": "2019-08-26T21:47:37.780Z",
-    "total_run_count": 114,
-    "date_changed": "2019-08-26T21:48:43.095Z",
+    "last_run_at": "2020-11-20T13:23:23.486Z",
+    "total_run_count": 491,
+    "date_changed": "2020-11-20T13:23:59.312Z",
     "description": ""
   }
 },
@@ -105,12 +101,13 @@
     "headers": "{}",
     "priority": null,
     "expires": null,
+    "expire_seconds": null,
     "one_off": false,
     "start_time": "2019-02-16T21:40:59Z",
     "enabled": true,
-    "last_run_at": "2019-08-26T21:47:37.795Z",
-    "total_run_count": 110,
-    "date_changed": "2019-08-26T21:48:43.099Z",
+    "last_run_at": "2020-11-20T13:45:00.000Z",
+    "total_run_count": 510,
+    "date_changed": "2020-11-20T13:45:05.027Z",
     "description": ""
   }
 },
@@ -132,12 +129,13 @@
     "headers": "{}",
     "priority": null,
     "expires": null,
+    "expire_seconds": null,
     "one_off": false,
     "start_time": "2019-02-23T19:37:22Z",
     "enabled": true,
-    "last_run_at": "2019-08-26T21:47:37.814Z",
-    "total_run_count": 9,
-    "date_changed": "2019-08-26T21:48:42.985Z",
+    "last_run_at": "2020-11-20T13:35:00.001Z",
+    "total_run_count": 382,
+    "date_changed": "2020-11-20T13:36:00.067Z",
     "description": "Parse beers for Stem & Stein"
   }
 },
@@ -159,12 +157,13 @@
     "headers": "{}",
     "priority": null,
     "expires": null,
+    "expire_seconds": null,
     "one_off": false,
     "start_time": null,
     "enabled": true,
-    "last_run_at": "2019-08-26T21:47:37.825Z",
-    "total_run_count": 4,
-    "date_changed": "2019-08-26T21:48:43.087Z",
+    "last_run_at": "2020-11-20T13:23:23.263Z",
+    "total_run_count": 389,
+    "date_changed": "2020-11-20T13:23:59.287Z",
     "description": ""
   }
 },
@@ -186,12 +185,13 @@
     "headers": "{}",
     "priority": null,
     "expires": null,
+    "expire_seconds": null,
     "one_off": false,
     "start_time": null,
     "enabled": true,
-    "last_run_at": "2019-08-26T21:47:37.859Z",
-    "total_run_count": 2,
-    "date_changed": "2019-08-26T21:48:43.076Z",
+    "last_run_at": "2020-11-20T12:37:11.955Z",
+    "total_run_count": 44,
+    "date_changed": "2020-11-20T12:38:30.198Z",
     "description": ""
   }
 },
@@ -213,12 +213,13 @@
     "headers": "{}",
     "priority": null,
     "expires": null,
+    "expire_seconds": null,
     "one_off": false,
     "start_time": null,
     "enabled": true,
-    "last_run_at": "2019-08-26T21:47:37.881Z",
-    "total_run_count": 2,
-    "date_changed": "2019-08-26T21:48:43.091Z",
+    "last_run_at": "2020-11-20T12:37:12.016Z",
+    "total_run_count": 48,
+    "date_changed": "2020-11-20T12:38:30.252Z",
     "description": ""
   }
 },
@@ -240,13 +241,98 @@
     "headers": "{}",
     "priority": null,
     "expires": null,
+    "expire_seconds": null,
+    "one_off": false,
+    "start_time": null,
+    "enabled": true,
+    "last_run_at": "2020-11-20T13:59:00.000Z",
+    "total_run_count": 372,
+    "date_changed": "2020-11-20T14:00:10.038Z",
+    "description": "Remove BeerAlternateName and ManufacturerAlternateName instances which match their parents' names."
+  }
+},
+{
+  "model": "django_celery_beat.periodictask",
+  "pk": 11,
+  "fields": {
+    "name": "Parse BeerMenus",
+    "task": "tap_list_providers.tasks.parse_provider",
+    "interval": null,
+    "crontab": 11,
+    "solar": null,
+    "clocked": null,
+    "args": "[\"beermenus\"]",
+    "kwargs": "{}",
+    "queue": null,
+    "exchange": null,
+    "routing_key": null,
+    "headers": "{}",
+    "priority": null,
+    "expires": null,
+    "expire_seconds": null,
+    "one_off": false,
+    "start_time": null,
+    "enabled": true,
+    "last_run_at": "2020-11-20T12:37:11.036Z",
+    "total_run_count": 111,
+    "date_changed": "2020-11-20T12:38:30.211Z",
+    "description": ""
+  }
+},
+{
+  "model": "django_celery_beat.periodictask",
+  "pk": 12,
+  "fields": {
+    "name": "Parse Arryved Embedded Menus",
+    "task": "tap_list_providers.tasks.parse_provider",
+    "interval": null,
+    "crontab": 12,
+    "solar": null,
+    "clocked": null,
+    "args": "[\"arryved_embedded_menu\"]",
+    "kwargs": "{}",
+    "queue": null,
+    "exchange": null,
+    "routing_key": null,
+    "headers": "{}",
+    "priority": null,
+    "expires": null,
+    "expire_seconds": null,
     "one_off": false,
     "start_time": null,
     "enabled": true,
     "last_run_at": null,
     "total_run_count": 0,
-    "date_changed": "2019-08-26T21:56:38.133Z",
-    "description": "Remove BeerAlternateName and ManufacturerAlternateName instances which match their parents' names."
+    "date_changed": "2020-11-20T14:00:37.814Z",
+    "description": "Parse arryved embedded menus"
+  }
+},
+{
+  "model": "django_celery_beat.periodictask",
+  "pk": 13,
+  "fields": {
+    "name": "Parse Arryved POS Menus",
+    "task": "tap_list_providers.tasks.parse_provider",
+    "interval": null,
+    "crontab": 13,
+    "solar": null,
+    "clocked": null,
+    "args": "[\"arryved_pos_menu\"]",
+    "kwargs": "{}",
+    "queue": null,
+    "exchange": null,
+    "routing_key": null,
+    "headers": "{}",
+    "priority": null,
+    "expires": null,
+    "expire_seconds": null,
+    "one_off": false,
+    "start_time": null,
+    "enabled": true,
+    "last_run_at": null,
+    "total_run_count": 0,
+    "date_changed": "2020-11-20T14:01:17.562Z",
+    "description": ""
   }
 },
 {
@@ -370,6 +456,42 @@
   "pk": 10,
   "fields": {
     "minute": "59",
+    "hour": "*",
+    "day_of_week": "*",
+    "day_of_month": "*",
+    "month_of_year": "*",
+    "timezone": "UTC"
+  }
+},
+{
+  "model": "django_celery_beat.crontabschedule",
+  "pk": 11,
+  "fields": {
+    "minute": "30",
+    "hour": "3,9,15,21",
+    "day_of_week": "*",
+    "day_of_month": "*",
+    "month_of_year": "*",
+    "timezone": "UTC"
+  }
+},
+{
+  "model": "django_celery_beat.crontabschedule",
+  "pk": 12,
+  "fields": {
+    "minute": "20",
+    "hour": "*",
+    "day_of_week": "*",
+    "day_of_month": "*",
+    "month_of_year": "*",
+    "timezone": "UTC"
+  }
+},
+{
+  "model": "django_celery_beat.crontabschedule",
+  "pk": 13,
+  "fields": {
+    "minute": "25",
     "hour": "*",
     "day_of_week": "*",
     "day_of_month": "*",

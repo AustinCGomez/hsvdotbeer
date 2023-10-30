@@ -1,3 +1,6 @@
+"""Parser for DigitalPour"""
+
+import datetime
 from decimal import Decimal
 import logging
 import os
@@ -13,254 +16,312 @@ from django.core.exceptions import ImproperlyConfigured, AppRegistryNotReady
 try:
     from ..base import BaseTapListProvider
 except (ImproperlyConfigured, AppRegistryNotReady):
-    os.environ['DJANGO_SETTINGS_MODULE'] = 'hsv_dot_beer.config'
+    os.environ["DJANGO_SETTINGS_MODULE"] = "hsv_dot_beer.config"
     os.environ.setdefault("DJANGO_CONFIGURATION", "Local")
     configurations.setup()
     from ..base import BaseTapListProvider
 
 from taps.models import Tap
+from venues.models import Venue
 
 
+UTC = datetime.timezone.utc
 LOG = logging.getLogger(__name__)
 
 
 class DigitalPourParser(BaseTapListProvider):
     """Parser for DigitalPour based vendors."""
 
-    URL = 'https://mobile.digitalpour.com/DashboardServer/v4/MobileApp/MenuItems/{}/{}/Tap?ApiKey={}'  # noqa
-    APIKEY = '574725e55e002c0b7cf0cf19'
-    provider_name = 'digitalpour'
+    URL = "https://mobile.digitalpour.com/DashboardServer/v4/MobileApp/MenuItems/{}/{}/Tap?ApiKey={}"  # noqa
+    APIKEY = "574725e55e002c0b7cf0cf19"
+    provider_name = "digitalpour"
 
     def __init__(self, location=None):
         """Constructor."""
         self.url = None
+        self.update_date = None
         if location:
             self.url = self.URL.format(location[0], location[1], self.APIKEY)
         super().__init__()
 
-    def handle_venue(self, venue):
+    def handle_venue(self, venue: Venue) -> datetime.datetime:
         venue_id = venue.api_configuration.digital_pour_venue_id
         location_number = venue.api_configuration.digital_pour_location_number
         self.url = self.URL.format(venue_id, location_number, self.APIKEY)
         data = self.fetch()
-        taps = {tap.tap_number: tap for tap in venue.taps.all()}
+        taps: dict[int, Tap] = {tap.tap_number: tap for tap in venue.taps.all()}
+        self.update_date = datetime.datetime(1970, 1, 1, 0, 0, 0).replace(tzinfo=UTC)
         manufacturers = {}
+        tap_numbers_seen: set[int] = set()
         for entry in data:
-            if not entry['Active']:
+            if not entry["Active"]:
                 # in the cooler, not on tap
                 continue
             # 1. parse the tap
             tap_info = self.parse_tap(entry)
+            while tap_info["tap_number"] in tap_numbers_seen:
+                # work around duplicates by adding one
+                tap_info["tap_number"] += 1
+            tap_numbers_seen.add(tap_info["tap_number"])
             try:
-                tap = taps[tap_info['tap_number']]
+                tap = taps[tap_info["tap_number"]]
             except KeyError:
-                tap = Tap(venue=venue, tap_number=tap_info['tap_number'])
-            tap.time_added = tap_info['added']
-            tap.time_updated = tap_info['updated']
-            tap.estimated_percent_remaining = tap_info['percent_full']
-            if tap_info['gas_type'] in [i[0] for i in Tap.GAS_CHOICES]:
-                tap.gas_type = tap_info['gas_type']
+                tap = Tap(venue=venue, tap_number=tap_info["tap_number"])
+            tap.time_added = tap_info["added"]
+            tap.time_updated = tap_info["updated"]
+            if tap.time_updated and tap.time_updated > self.update_date:
+                LOG.debug("Updating venue timestamp to %s", tap.time_updated)
+                self.update_date = tap.time_updated
+            tap.estimated_percent_remaining = tap_info["percent_full"]
+            if tap_info["gas_type"] in [i[0] for i in Tap.GAS_CHOICES]:
+                tap.gas_type = tap_info["gas_type"]
             else:
-                tap.gas_type = ''
+                tap.gas_type = ""
             # 2. parse the manufacturer, creating if needed
             parsed_manufacturer = self.parse_manufacturer(entry)
             try:
-                manufacturer = manufacturers[parsed_manufacturer['name']]
+                manufacturer = manufacturers[parsed_manufacturer["name"]]
             except KeyError:
                 defaults = {
-                    field: parsed_manufacturer[field] for field in [
-                        'location', 'logo_url', 'twitter_handle', 'url',
-                    ] if parsed_manufacturer[field]
+                    field: parsed_manufacturer[field]
+                    for field in [
+                        "location",
+                        "logo_url",
+                        "twitter_handle",
+                        "url",
+                    ]
+                    if parsed_manufacturer[field]
                 }
                 manufacturer = self.get_manufacturer(
-                    name=parsed_manufacturer['name'],
+                    name=parsed_manufacturer["name"],
                     **defaults,
                 )
                 manufacturers[manufacturer.name] = manufacturer
             # 3. get the beer, creating if necessary
             parsed_beer = self.parse_beer(entry)
-            name = parsed_beer.pop('name')
-            color_html = parsed_beer.pop('color', '')
+            name = parsed_beer.pop("name")
+            color_html = parsed_beer.pop("color", "")
             if color_html:
                 # convert 0xabcde into #0abcde
-                color_html = f'#{color_html[2:]:0>6}'
-                parsed_beer['color_html'] = color_html
+                color_html = f"#{color_html[2:]:0>6}"
+                parsed_beer["color_html"] = color_html
             else:
                 # clear the color if unknown
-                parsed_beer['color_html'] = ''
+                parsed_beer["color_html"] = ""
             LOG.debug(
-                'looking up beer: name %s, mfg %s, other data %s',
-                name, manufacturer, parsed_beer,
+                "looking up beer: name %s, mfg %s, other data %s",
+                name,
+                manufacturer,
+                parsed_beer,
             )
-            if name.casefold().strip() == 'N/A'.casefold():
-                if not parsed_beer.get('abv'):
+            if name.casefold().strip() == "N/A".casefold():
+                if not parsed_beer.get("abv"):
                     # it's an empty tap
-                    LOG.info('Tap %s is unused', tap.tap_number)
+                    LOG.info("Tap %s is unused", tap.tap_number)
                     tap.beer = None
                     tap.save()
                     continue
             beer = self.get_beer(
-                name, manufacturer, pricing=self.parse_pricing(entry),
-                venue=venue, **parsed_beer,
+                name,
+                manufacturer,
+                pricing=self.parse_pricing(entry),
+                venue=venue,
+                **parsed_beer,
             )
             # 4. assign the beer to the tap
             tap.beer = beer
             tap.save()
+        for tap_number, tap in taps.items():
+            if tap_number not in tap_numbers_seen:
+                tap.delete()
+        return self.update_date
 
     def parse_beer(self, entry):
         """Parse beer info from JSON entry."""
-        detail = entry['MenuItemProductDetail']
-        b = detail['Beverage']
-        if 'Cider' in b['$type']:
+        detail = entry["MenuItemProductDetail"]
+        b = detail["Beverage"]
+        if "Cider" in b["$type"]:
             beer = {
-                'name': b['CiderName'],
-                'style': b['CiderStyle']['StyleName'],
-                'abv': b['Abv'],
-                'ibu': b['Ibu'],
-                'color': hex(b['CiderStyle']['Color']),
-                'logo_url': b.get('LogoImageUrl'),
-                'beer_advocate_url': b.get('BeerAdvocateUrl'),
-                'rate_beer_url': b.get('RateBeerUrl'),
-                'manufacturer_url': b.get('BeerUrl'),
+                "name": b["CiderName"],
+                "style": b["CiderStyle"]["StyleName"],
+                "abv": b["Abv"],
+                "ibu": b["Ibu"],
+                "color": hex(b["CiderStyle"]["Color"]),
+                "logo_url": b.get("LogoImageUrl"),
+                "beer_advocate_url": b.get("BeerAdvocateUrl"),
+                "rate_beer_url": b.get("RateBeerUrl"),
+                "manufacturer_url": b.get("BeerUrl"),
             }
-        elif 'Mead' in b['$type']:
+        elif "Mead" in b["$type"]:
             beer = {
-                'name': b['MeadName'],
-                'style': b['MeadStyle']['StyleName'],
-                'abv': b['Abv'],
-                'ibu': b.get('Ibu'),
-                'color': hex(b['MeadStyle']['Color']),
-                'logo_url': b.get('LogoImageUrl'),
-                'beer_advocate_url': b.get('BeerAdvocateUrl'),
-                'rate_beer_url': b.get('RateBeerUrl'),
-                'manufacturer_url': b.get('BeerUrl'),
+                "name": b["MeadName"],
+                "style": b["MeadStyle"]["StyleName"],
+                "abv": b["Abv"],
+                "ibu": b.get("Ibu"),
+                "color": hex(b["MeadStyle"]["Color"]),
+                "logo_url": b.get("LogoImageUrl"),
+                "beer_advocate_url": b.get("BeerAdvocateUrl"),
+                "rate_beer_url": b.get("RateBeerUrl"),
+                "manufacturer_url": b.get("BeerUrl"),
             }
-        elif 'Wine' in b['$type']:
+        elif "Wine" in b["$type"]:
             beer = {
-                'name': b['WineName'],
-                'style': b['FullStyleName'],
-                'abv': b['Abv'],
-                'ibu': b.get('Ibu'),
-                'color': hex(b['StyleColor']),
-                'logo_url': b.get('LogoImageUrl'),
-                'beer_advocate_url': b.get('BeerAdvocateUrl'),
-                'rate_beer_url': b.get('RateBeerUrl'),
-                'manufacturer_url': b.get('BeerUrl'),
+                "name": b["WineName"],
+                "style": b["FullStyleName"],
+                "abv": b["Abv"],
+                "ibu": b.get("Ibu"),
+                "color": hex(b["StyleColor"]),
+                "logo_url": b.get("LogoImageUrl"),
+                "beer_advocate_url": b.get("BeerAdvocateUrl"),
+                "rate_beer_url": b.get("RateBeerUrl"),
+                "manufacturer_url": b.get("BeerUrl"),
             }
-        elif 'Kombucha' in b['$type']:
+        elif "Kombucha" in b["$type"]:
             beer = {
-                'name': b['KombuchaName'],
-                'style': b['FullStyleName'],
-                'abv': b['Abv'],
-                'ibu': b.get('Ibu'),
-                'color': hex(b['StyleColor']),
-                'logo_url': b.get('LogoImageUrl'),
-                'beer_advocate_url': b.get('BeerAdvocateUrl'),
-                'rate_beer_url': b.get('RateBeerUrl'),
-                'manufacturer_url': b.get('BeerUrl'),
+                "name": b["KombuchaName"],
+                "style": b["FullStyleName"],
+                "abv": b["Abv"],
+                "ibu": b.get("Ibu"),
+                "color": hex(b["StyleColor"]),
+                "logo_url": b.get("LogoImageUrl"),
+                "beer_advocate_url": b.get("BeerAdvocateUrl"),
+                "rate_beer_url": b.get("RateBeerUrl"),
+                "manufacturer_url": b.get("BeerUrl"),
             }
-        elif 'HardSeltzer' in b['$type']:
+        elif "HardSeltzer" in b["$type"]:
             beer = {
-                'name': b['HardSeltzerName'],
-                'style': b['HardSeltzerStyle']['StyleName'],
-                'abv': b['Abv'],
-                'ibu': b.get('Ibu', 0),
-                'color': hex(b['StyleColor']),
-                'logo_url': b.get('LogoImageUrl'),
-                'beer_advocate_url': b.get('BeerAdvocateUrl'),
-                'rate_beer_url': b.get('RateBeerUrl'),
-                'manufacturer_url': b.get('BeerUrl'),
+                "name": b["HardSeltzerName"],
+                "style": b["HardSeltzerStyle"]["StyleName"],
+                "abv": b["Abv"],
+                "ibu": b.get("Ibu", 0),
+                "color": hex(b["StyleColor"]),
+                "logo_url": b.get("LogoImageUrl"),
+                "beer_advocate_url": b.get("BeerAdvocateUrl"),
+                "rate_beer_url": b.get("RateBeerUrl"),
+                "manufacturer_url": b.get("BeerUrl"),
+            }
+        elif "CustomBeverage" in b["$type"]:
+            beer = {
+                "name": b["BeverageName"],
+                "style": b["FullStyleName"],
+                "abv": b["Abv"],
+                "ibu": b.get("Ibu"),
+                "color": hex(b["StyleColor"]),
+                "beer_advocate_url": b.get("BeerAdvocateUrl"),
+                "rate_beer_url": b.get("RateBeerUrl"),
+                "manufacturer_url": b.get("BeerUrl"),
+                "logo_url": b.get("LogoImageUrl")
+                or b.get("ResolvedLogoImageUrl")
+                or None,
             }
         else:
             beer = {
-                'name': b['BeerName'],
-                'style': b['BeerStyle']['StyleName'],
-                'abv': b['Abv'],
-                'ibu': b['Ibu'],
-                'color': hex(b['BeerStyle']['Color']),
-                'beer_advocate_url': b.get('BeerAdvocateUrl'),
-                'rate_beer_url': b.get('RateBeerUrl'),
-                'manufacturer_url': b.get('BeerUrl'),
-                'logo_url': b.get('LogoImageUrl') or b.get('ResolvedLogoImageUrl') or None,
+                "name": b["BeerName"],
+                "style": b["BeerStyle"]["StyleName"],
+                "abv": b["Abv"],
+                "ibu": b["Ibu"],
+                "color": hex(b["BeerStyle"]["Color"]),
+                "beer_advocate_url": b.get("BeerAdvocateUrl"),
+                "rate_beer_url": b.get("RateBeerUrl"),
+                "manufacturer_url": b.get("BeerUrl"),
+                "logo_url": b.get("LogoImageUrl")
+                or b.get("ResolvedLogoImageUrl")
+                or None,
             }
         return beer
 
     def parse_manufacturer(self, tap):
         """Parse manufacturer info from JSON entry."""
-        producer = tap['MenuItemProductDetail']['Beverage']['BeverageProducer']
+        producer = tap["MenuItemProductDetail"]["Beverage"]["BeverageProducer"]
 
         styles = [
-            'Cidery', 'Meadery', 'Winery', 'KombuchaMaker', 'Brewery', 'HardSeltzerMaker',
+            "Cidery",
+            "Meadery",
+            "Winery",
+            "KombuchaMaker",
+            "Brewery",
+            "HardSeltzerMaker",
+            "Company",
+            "Producer",  # Madison Taproom created their own entry for Bell's somehow
         ]
-        url = ''
+        url = ""
         for style in styles:
             try:
-                name = producer[f'{style}Name']
+                name = producer[f"{style}Name"]
             except KeyError:
                 # try the next one
                 continue
             else:
-                url = producer.get(f'{style}Url', '') or ''
+                url = producer.get(f"{style}Url", "") or ""
                 # success
                 break
         else:
             raise ValueError(f"Unknown producer type {producer}")
 
         manufacturer = {
-            'name': name,
-            'location': producer['Location'] or '',
-            'logo_url': producer.get('LogoImageUrl'),
-            'twitter_handle': producer.get('TwitterName') or '',
-            'url': url,
+            "name": name,
+            "location": producer["Location"] or "",
+            "logo_url": producer.get("LogoImageUrl"),
+            "twitter_handle": producer.get("TwitterName") or "",
+            "url": url,
         }
-        if manufacturer['url'] and not manufacturer['url'].casefold().startswith(
-            'http'.casefold()
+        if manufacturer["url"] and not manufacturer["url"].casefold().startswith(
+            "http".casefold()
         ):
-            manufacturer['url'] = f'http://{manufacturer["url"]}'
-        if manufacturer['twitter_handle']:
-            if manufacturer['twitter_handle'].startswith('@'):
+            manufacturer["url"] = f'http://{manufacturer["url"]}'
+        if manufacturer["twitter_handle"]:
+            if manufacturer["twitter_handle"].startswith("@"):
                 # strip the leading @ for consistency
-                manufacturer['twitter_handle'] = manufacturer['twitter_handle'][1:]
-            if '/' in manufacturer['twitter_handle']:
-                manufacturer['twitter_handle'] = manufacturer['twitter_handle'].rsplit('/', 1)[-1]
+                manufacturer["twitter_handle"] = manufacturer["twitter_handle"][1:]
+            if "/" in manufacturer["twitter_handle"]:
+                manufacturer["twitter_handle"] = manufacturer["twitter_handle"].rsplit(
+                    "/", 1
+                )[-1]
         LOG.debug(
-            'Got twitter name %s from producer %s',
-            manufacturer['twitter_handle'], producer,
+            "Got twitter name %s from producer %s",
+            manufacturer["twitter_handle"],
+            producer,
         )
         return manufacturer
 
     def parse_tap(self, tap):
         """Parse tap info from JSON entry."""
         ret = {
-            'added': dateutil.parser.parse(tap['DatePutOn']),
-            'updated': now(),
-            'tap_number': tap['MenuItemDisplayDetail']['DisplayOrder'],
-            'percent_full': tap['MenuItemProductDetail']['PercentFull'],
-            'gas_type': (tap['MenuItemProductDetail']['KegType'] or '').lower(),
+            "added": dateutil.parser.parse(tap["DatePutOn"]),
+            "updated": now(),
+            "tap_number": tap["MenuItemDisplayDetail"]["DisplayOrder"],
+            "percent_full": tap["MenuItemProductDetail"]["PercentFull"],
+            "gas_type": (tap["MenuItemProductDetail"]["KegType"] or "").lower(),
         }
+        if refresh_ts := tap.get("LastRefreshDateTime"):
+            ret["updated"] = dateutil.parser.parse(refresh_ts)
+            if not ret["updated"].tzinfo:
+                ret["updated"] = ret["updated"].replace(tzinfo=UTC)
+            LOG.debug("Tap time updated set to %s", ret["updated"])
         return ret
 
     def parse_pricing(self, tap):
         """Parse pricing info from JSON entry."""
         pricing = []
-        prices = tap['MenuItemProductDetail']['Prices']
+        prices = tap["MenuItemProductDetail"]["Prices"]
         for price in prices:
-            if not price.get('DisplayOnMenu'):
+            if not price.get("DisplayOnMenu"):
                 continue
             p = {
-                'volume_oz': Decimal(price['DisplaySize']),
+                "volume_oz": Decimal(round(price["DisplaySize"], 1)),
                 # 6oz --> 6 oz
-                'name': f'{price["DisplayName"][:-2]} '
-                f'{price["DisplayName"][-2:]}',
-                'price': price['Price'],
-                'per_ounce': price['Price'] / price['Size'],
+                "name": f'{price["DisplayName"][:-2]} ' f'{price["DisplayName"][-2:]}',
+                "price": price["Price"],
+                "per_ounce": price["Price"] / price["Size"],
             }
             pricing.append(p)
         return pricing
 
     def fetch(self):
         """Fetch the most recent taplist"""
-        data = requests.get(self.url).json()
+        response = requests.get(self.url)
+        response.raise_for_status()
+        data = response.json()
         return data
 
     def taps(self):
@@ -268,32 +329,33 @@ class DigitalPourParser(BaseTapListProvider):
         ret = []
         data = self.fetch()
         for entry in data:
-            if not entry['Active']:
+            if not entry["Active"]:
                 continue
             tap_info = self.parse_tap(entry)
-            tap_info['beer'] = self.parse_beer(entry)
-            tap_info['manufacturer'] = self.parse_manufacturer(entry)
-            tap_info['pricing'] = self.parse_pricing(entry)
+            tap_info["beer"] = self.parse_beer(entry)
+            tap_info["manufacturer"] = self.parse_manufacturer(entry)
+            tap_info["pricing"] = self.parse_pricing(entry)
             ret.append(tap_info)
         return ret
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import argparse
 
     locations = {
-        'sta': ('5761f0a45e002c13703ed811', 1),
-        'wywbmad': ('57b130dd5e002c0388f8b686', 1),
-        'wywb805': ('57b130dd5e002c0388f8b686', 2),
-        'otbx': ('5502506cb3b70304a8f2e0d2', 1),
-        'rccb': ('5aa1a8135e002c0924805971', 1),
-        'bufeddies': ('5afe0f3a5e002c0b8060a5b8', 1)
+        "sta": ("5761f0a45e002c13703ed811", 1),
+        "madtaproom": ("5c7e9f7635272613d8d70727", 1),
+        "otbx": ("5502506cb3b70304a8f2e0d2", 1),
+        "rccb": ("5aa1a8135e002c0924805971", 1),
+        "bufeddies": ("5afe0f3a5e002c0b8060a5b8", 1),
+        "rrmad": ("5d657d943527260064257abf", 1),
+        "rrdowntown": ("5d657d943527260064257abf", 2),
     }
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dump', action='store_true')
-    parser.add_argument('--print-logo-url', action='store_true')
-    parser.add_argument('location')
+    parser.add_argument("--dump", action="store_true")
+    parser.add_argument("--print-logo-url", action="store_true")
+    parser.add_argument("location")
     args = parser.parse_args()
 
     t = DigitalPourParser(locations[args.location])
@@ -305,4 +367,4 @@ if __name__ == '__main__':
             if args.print_logo_url:
                 print(f'{tap["beer"]["name"]}\t{tap["beer"]["logo_url"]}')
             else:
-                print(tap['beer']['name'])
+                print(tap["beer"]["name"])

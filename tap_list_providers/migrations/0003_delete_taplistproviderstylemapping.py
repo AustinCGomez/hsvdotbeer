@@ -4,13 +4,12 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('tap_list_providers', '0002_auto_20190218_0235'),
+        ("tap_list_providers", "0002_auto_20190218_0235"),
     ]
 
     operations = [
         migrations.DeleteModel(
-            name='TapListProviderStyleMapping',
+            name="TapListProviderStyleMapping",
         ),
     ]

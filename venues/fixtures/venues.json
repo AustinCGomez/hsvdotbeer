@@ -18,7 +18,7 @@
         "untappd_url": "https://untappd.com/v/straight-to-ale-brands/5025238",
         "email": "",
         "phone_number": "2568019650",
-        "logo_url": "http://straighttoale.com/wp-content/uploads/2018/08/2018-STA-logo.png",
+        "logo_url": "https://straighttoale.com/wp-content/uploads/2019/09/2019_Straighttoale_Footer_logo.png",
         "slug": "straight-to-ale",
         "on_downtown_craft_beer_trail": true,
         "latitude": "34.72094800",
@@ -72,65 +72,11 @@
         "untappd_url": null,
         "email": "",
         "phone_number": "2562707825",
-        "logo_url": "http://otbxhsv.com/wp-content/themes/otbx-wp/dist/img/fb.png",
+        "logo_url": "https://hsv-dot-beer.s3.amazonaws.com/venues/png/old-town-beer-exchange.png",
         "slug": "otbx",
         "on_downtown_craft_beer_trail": true,
         "latitude": "34.73339800",
         "longitude": "-86.58495300",
-        "twitter_short_location_description": ""
-    }
-},
-{
-    "model": "venues.venue",
-    "pk": 5,
-    "fields": {
-        "name": "Rocket City Craft Beer",
-        "address": "1079 Balch Road, Suite F",
-        "city": "Madison",
-        "state": "AL",
-        "postal_code": "35758",
-        "country": "US",
-        "time_zone": "America/Chicago",
-        "website": "https://www.rocketcitycraftbeer.com/",
-        "facebook_page": "http://www.facebook.com/rocketcitycraftbeer",
-        "twitter_handle": "rccbhsv",
-        "instagram_handle": "rocketcitycraftbeer",
-        "tap_list_provider": "digitalpour",
-        "untappd_url": "https://untappd.com/v/rocket-city-craft-beer/7494975",
-        "email": "",
-        "phone_number": "2564890807",
-        "logo_url": "https://static1.squarespace.com/static/5a9c2a4af8370a048dab34c4/t/5b6b4bc18a922d8794f6904b/1533758427380/Rocket-City-Beer-Garden+RGB_Color+jpg.jpg?format=2500w",
-        "slug": "rocket-city-craft-beer",
-        "on_downtown_craft_beer_trail": false,
-        "latitude": "34.74765700",
-        "longitude": "-86.76637000",
-        "twitter_short_location_description": ""
-    }
-},
-{
-    "model": "venues.venue",
-    "pk": 6,
-    "fields": {
-        "name": "Whole Foods",
-        "address": "2501 Memorial Parkway SW",
-        "city": "Huntsville",
-        "state": "AL",
-        "postal_code": "35801",
-        "country": "US",
-        "time_zone": "America/Chicago",
-        "website": "https://www.wholefoodsmarket.com/shop/HSV",
-        "facebook_page": "",
-        "twitter_handle": "",
-        "instagram_handle": "",
-        "tap_list_provider": "taphunter",
-        "untappd_url": "https://untappd.com/v/whole-foods-market/3882150",
-        "email": "",
-        "phone_number": "2568013741",
-        "logo_url": "https://www.wholefoodsmarket.com/sites/default/files/media/Whole%20Foods%20Logo_1.JPG",
-        "slug": "whole-foods-hsv",
-        "on_downtown_craft_beer_trail": false,
-        "latitude": "34.71222600",
-        "longitude": "-86.58991600",
         "twitter_short_location_description": ""
     }
 },
@@ -180,7 +126,7 @@
         "untappd_url": "https://untappd.com/v/wagon-wheel-liquors/588607",
         "email": "wagonwheelliquors431@gmail.com",
         "phone_number": "2565335155",
-        "logo_url": "http://www.wagonwheelliquorsal.com/wp-content/uploads/2017/11/logo.png",
+        "logo_url": "https://hsv-dot-beer.s3.amazonaws.com/venues/png/wagon-wheel.png",
         "slug": "wagon-wheel",
         "on_downtown_craft_beer_trail": false,
         "latitude": "34.65305000",
@@ -298,33 +244,6 @@
 },
 {
     "model": "venues.venue",
-    "pk": 14,
-    "fields": {
-        "name": "Mad Malts Brewing",
-        "address": "109 Maple Ave NW",
-        "city": "Huntsville",
-        "state": "AL",
-        "postal_code": "35801",
-        "country": "US",
-        "time_zone": "America/Chicago",
-        "website": "http://madmaltsbrewing.com/",
-        "facebook_page": "https://www.facebook.com/MadMaltsBrewing1/",
-        "twitter_handle": "madmaltsbrewing",
-        "instagram_handle": "",
-        "tap_list_provider": "untappd",
-        "untappd_url": "https://untappd.com/v/mad-malts/3802051",
-        "email": "chris@madmaltsbrewing.com",
-        "phone_number": "2565032233",
-        "logo_url": "https://utfb-images.untappd.com/logos/9210d47b78cd274d421470d180b242144c08b524.jpg",
-        "slug": "mad-malts",
-        "on_downtown_craft_beer_trail": true,
-        "latitude": "34.74636400",
-        "longitude": "-86.58528300",
-        "twitter_short_location_description": ""
-    }
-},
-{
-    "model": "venues.venue",
     "pk": 15,
     "fields": {
         "name": "The Stem and Stein",
@@ -365,7 +284,7 @@
         "facebook_page": "https://www.facebook.com/InnerSpaceBrewing/",
         "twitter_handle": "InnerSpaceBrews",
         "instagram_handle": "",
-        "tap_list_provider": "taplist.io",
+        "tap_list_provider": "untappd",
         "untappd_url": "https://untappd.com/v/innerspace-brewing/7027492",
         "email": "",
         "phone_number": "(256) 489-5599",
@@ -379,82 +298,55 @@
 },
 {
     "model": "venues.venue",
-    "pk": 18,
+    "pk": 21,
     "fields": {
-        "name": "Big Spring Tavern",
-        "address": "200 Westside Square, Suite 60",
+        "name": "Bad Daddy's Burger Bar Huntsville",
+        "address": "2317 Memorial Pkwy SW",
+        "city": "Huntsville",
+        "state": "AL",
+        "postal_code": "35801",
+        "country": "US",
+        "time_zone": "America/Chicago",
+        "website": "https://baddaddysburgerbar.com/store/al/huntsville-al",
+        "facebook_page": "https://facebook.com/BadDaddysBurgerBar",
+        "twitter_handle": "BadDaddysBurger",
+        "instagram_handle": "baddaddysburger",
+        "tap_list_provider": "beermenus",
+        "untappd_url": null,
+        "email": "",
+        "phone_number": "2569704466",
+        "logo_url": "https://hsv-dot-beer.s3.amazonaws.com/venues/png/baddaddys.png",
+        "slug": "bad-daddys-burger-bar-huntsville",
+        "on_downtown_craft_beer_trail": false,
+        "latitude": "34.71462200",
+        "longitude": "-86.59030400",
+        "twitter_short_location_description": ""
+    }
+},
+{
+    "model": "venues.venue",
+    "pk": 35,
+    "fields": {
+        "name": "Chandlers Ford Brewing",
+        "address": "109 North Side Square",
         "city": "Huntsville",
         "state": "AL",
         "postal_code": "35801",
         "country": "US",
         "time_zone": "America/Chicago",
         "website": "",
-        "facebook_page": "",
+        "facebook_page": "https://www.facebook.com/Chandlersfordbrewing",
         "twitter_handle": "",
-        "instagram_handle": "",
-        "tap_list_provider": "digitalpour",
-        "untappd_url": null,
+        "instagram_handle": "chandlers_ford_brewing",
+        "tap_list_provider": "untappd",
+        "untappd_url": "https://untappd.com/ChandlersFordBrewing",
         "email": "",
-        "phone_number": "",
-        "logo_url": "",
-        "slug": "big-spring-tavern",
-        "on_downtown_craft_beer_trail": false,
-        "latitude": null,
-        "longitude": null,
-        "twitter_short_location_description": ""
-    }
-},
-{
-    "model": "venues.venue",
-    "pk": 19,
-    "fields": {
-        "name": "Rocket Republic Madison",
-        "address": "289 Production Ave",
-        "city": "Madison",
-        "state": "AL",
-        "postal_code": "35758",
-        "country": "US",
-        "time_zone": "America/Chicago",
-        "website": "https://www.rocketrepublicbrewing.com/",
-        "facebook_page": "https://www.facebook.com/RocketRepublicBrewing/",
-        "twitter_handle": "RRBeer",
-        "instagram_handle": "rocketrepubicbrewing",
-        "tap_list_provider": "digitalpour",
-        "untappd_url": "https://untappd.com/RocketRepublic",
-        "email": "info@rocketrepublicbrewing.com",
-        "phone_number": "2563254677",
-        "logo_url": "https://rocketrepublicbrewing.com/wp-content/uploads/2019/02/rr-logo-white.png",
-        "slug": "rocket-republic-madison",
-        "on_downtown_craft_beer_trail": false,
-        "latitude": null,
-        "longitude": null,
-        "twitter_short_location_description": ""
-    }
-},
-{
-    "model": "venues.venue",
-    "pk": 20,
-    "fields": {
-        "name": "Rocket Republic Downtown Huntsville",
-        "address": "617 Meridian St N",
-        "city": "Huntsville",
-        "state": "AL",
-        "postal_code": "35801",
-        "country": "US",
-        "time_zone": "America/Chicago",
-        "website": "https://www.rocketrepublicbrewing.com/",
-        "facebook_page": "https://www.facebook.com/RocketRepublicBrewing/",
-        "twitter_handle": "RR_Downtown",
-        "instagram_handle": "rocketrepubicbrewing",
-        "tap_list_provider": "digitalpour",
-        "untappd_url": null,
-        "email": "info@rocketrepublicbrewing.com",
-        "phone_number": "",
-        "logo_url": "https://rocketrepublicbrewing.com/wp-content/uploads/2019/02/rr-logo-white.png",
-        "slug": "rocket-republic-downtown-huntsville",
+        "phone_number": "2564272500",
+        "logo_url": "https://cdn.membershipworks.com/u/5d7a6bdaf033bf1e6d7b23d4_lgl.jpg",
+        "slug": "chandlers-ford",
         "on_downtown_craft_beer_trail": true,
-        "latitude": null,
-        "longitude": null,
+        "latitude": "34.730566",
+        "longitude": "-86.585553",
         "twitter_short_location_description": ""
     }
 },
@@ -473,7 +365,9 @@
         "taphunter_location": "",
         "taphunter_excluded_lists": "[]",
         "taplist_io_display_id": "",
-        "taplist_io_access_code": ""
+        "taplist_io_access_code": "",
+        "beermenus_categories": "[]",
+        "beermenus_slug": ""
     }
 },
 {
@@ -491,7 +385,9 @@
         "taphunter_location": "",
         "taphunter_excluded_lists": "[]",
         "taplist_io_display_id": "",
-        "taplist_io_access_code": ""
+        "taplist_io_access_code": "",
+        "beermenus_categories": "[]",
+        "beermenus_slug": ""
     }
 },
 {
@@ -509,43 +405,9 @@
         "taphunter_location": "",
         "taphunter_excluded_lists": "[]",
         "taplist_io_display_id": "",
-        "taplist_io_access_code": ""
-    }
-},
-{
-    "model": "venues.venueapiconfiguration",
-    "pk": 5,
-    "fields": {
-        "venue": 5,
-        "url": null,
-        "api_key": "",
-        "digital_pour_venue_id": "5aa1a8135e002c0924805971",
-        "digital_pour_location_number": 1,
-        "untappd_location": null,
-        "untappd_theme": null,
-        "untappd_categories": "[]",
-        "taphunter_location": "",
-        "taphunter_excluded_lists": "[]",
-        "taplist_io_display_id": "",
-        "taplist_io_access_code": ""
-    }
-},
-{
-    "model": "venues.venueapiconfiguration",
-    "pk": 6,
-    "fields": {
-        "venue": 6,
-        "url": null,
-        "api_key": "",
-        "digital_pour_venue_id": "",
-        "digital_pour_location_number": null,
-        "untappd_location": null,
-        "untappd_theme": null,
-        "untappd_categories": "[]",
-        "taphunter_location": "5963904507707392",
-        "taphunter_excluded_lists": "[]",
-        "taplist_io_display_id": "",
-        "taplist_io_access_code": ""
+        "taplist_io_access_code": "",
+        "beermenus_categories": "[]",
+        "beermenus_slug": ""
     }
 },
 {
@@ -563,7 +425,9 @@
         "taphunter_location": "6200813693698048",
         "taphunter_excluded_lists": "[]",
         "taplist_io_display_id": "",
-        "taplist_io_access_code": ""
+        "taplist_io_access_code": "",
+        "beermenus_categories": "[]",
+        "beermenus_slug": ""
     }
 },
 {
@@ -581,7 +445,9 @@
         "taphunter_location": "6082279375634432",
         "taphunter_excluded_lists": "[\"Kegs to Go\"]",
         "taplist_io_display_id": "",
-        "taplist_io_access_code": ""
+        "taplist_io_access_code": "",
+        "beermenus_categories": "[]",
+        "beermenus_slug": ""
     }
 },
 {
@@ -599,7 +465,9 @@
         "taphunter_location": "6032598809837568",
         "taphunter_excluded_lists": "[]",
         "taplist_io_display_id": "",
-        "taplist_io_access_code": ""
+        "taplist_io_access_code": "",
+        "beermenus_categories": "[]",
+        "beermenus_slug": ""
     }
 },
 {
@@ -617,7 +485,9 @@
         "taphunter_location": "",
         "taphunter_excluded_lists": "[]",
         "taplist_io_display_id": "",
-        "taplist_io_access_code": ""
+        "taplist_io_access_code": "",
+        "beermenus_categories": "[]",
+        "beermenus_slug": ""
     }
 },
 {
@@ -635,7 +505,9 @@
         "taphunter_location": "",
         "taphunter_excluded_lists": "[]",
         "taplist_io_display_id": "",
-        "taplist_io_access_code": ""
+        "taplist_io_access_code": "",
+        "beermenus_categories": "[]",
+        "beermenus_slug": ""
     }
 },
 {
@@ -653,25 +525,9 @@
         "taphunter_location": "",
         "taphunter_excluded_lists": "[]",
         "taplist_io_display_id": "",
-        "taplist_io_access_code": ""
-    }
-},
-{
-    "model": "venues.venueapiconfiguration",
-    "pk": 14,
-    "fields": {
-        "venue": 14,
-        "url": null,
-        "api_key": "",
-        "digital_pour_venue_id": "",
-        "digital_pour_location_number": null,
-        "untappd_location": 8588,
-        "untappd_theme": 30573,
-        "untappd_categories": "[\"Favorites\", \"Seasonals\", \"Exclusives\"]",
-        "taphunter_location": "",
-        "taphunter_excluded_lists": "[]",
-        "taplist_io_display_id": "",
-        "taplist_io_access_code": ""
+        "taplist_io_access_code": "",
+        "beermenus_categories": "[]",
+        "beermenus_slug": ""
     }
 },
 {
@@ -689,7 +545,9 @@
         "taphunter_location": "",
         "taphunter_excluded_lists": "[]",
         "taplist_io_display_id": "",
-        "taplist_io_access_code": ""
+        "taplist_io_access_code": "",
+        "beermenus_categories": "[]",
+        "beermenus_slug": ""
     }
 },
 {
@@ -701,67 +559,60 @@
         "api_key": "",
         "digital_pour_venue_id": "",
         "digital_pour_location_number": null,
-        "untappd_location": null,
-        "untappd_theme": null,
-        "untappd_categories": "[]",
+        "untappd_location": 33847,
+        "untappd_theme": 130917,
+        "untappd_categories": "[\"IPAs\", \"Saisons\", \"Fruity & Fresh\", \"The Dark Side\", \"Pale Ales\", \"Reds, Ambers, and Browns\", \"English Styles\", \"Lagers\", \"Wheats\", \"German Styles\", \"Ciders\", \"Sours\"]",
         "taphunter_location": "",
         "taphunter_excluded_lists": "[]",
-        "taplist_io_display_id": "4434",
-        "taplist_io_access_code": "5e5b8565-27b7-4cfd-8e52-b7d2b2ca5c63"
+        "taplist_io_display_id": "",
+        "taplist_io_access_code": "",
+        "beermenus_categories": "[]",
+        "beermenus_slug": ""
     }
 },
 {
     "model": "venues.venueapiconfiguration",
-    "pk": 18,
+    "pk": 21,
     "fields": {
-        "venue": 18,
+        "venue": 21,
         "url": null,
         "api_key": "",
-        "digital_pour_venue_id": "5c80378c3527260e1860a625",
-        "digital_pour_location_number": 1,
+        "digital_pour_venue_id": "",
+        "digital_pour_location_number": null,
         "untappd_location": null,
         "untappd_theme": null,
         "untappd_categories": "[]",
         "taphunter_location": "",
         "taphunter_excluded_lists": "[]",
         "taplist_io_display_id": "",
-        "taplist_io_access_code": ""
+        "taplist_io_access_code": "",
+        "beermenus_categories": "[\"on_tap\", \"featured\"]",
+        "beermenus_slug": "64594-bad-daddy-s-burger-bar-huntsville"
     }
 },
 {
     "model": "venues.venueapiconfiguration",
-    "pk": 19,
+    "pk": 35,
     "fields": {
-        "venue": 19,
+        "venue": 35,
         "url": null,
         "api_key": "",
-        "digital_pour_venue_id": "5d657d943527260064257abf",
-        "digital_pour_location_number": 1,
-        "untappd_location": null,
-        "untappd_theme": null,
-        "untappd_categories": "[]",
+        "digital_pour_venue_id": "",
+        "digital_pour_location_number": null,
+        "untappd_location": 33722,
+        "untappd_theme": 130417,
+        "untappd_categories": "[\"Tank Conditioned Beers\", \"High Gravity\", \"High Gravity Specialty and Barrel Aged\", \"Small Batch\", \"Brettanomyces Fermentations\"]",
         "taphunter_location": "",
         "taphunter_excluded_lists": "[]",
         "taplist_io_display_id": "",
-        "taplist_io_access_code": ""
-    }
-},
-{
-    "model": "venues.venueapiconfiguration",
-    "pk": 20,
-    "fields": {
-        "venue": 20,
-        "url": null,
-        "api_key": "",
-        "digital_pour_venue_id": "5d657d943527260064257abf",
-        "digital_pour_location_number": 2,
-        "untappd_location": null,
-        "untappd_theme": null,
-        "untappd_categories": "[]",
-        "taphunter_location": "",
-        "taphunter_excluded_lists": "[]",
-        "taplist_io_display_id": "",
-        "taplist_io_access_code": ""
+        "taplist_io_access_code": "",
+        "beermenus_categories": "[]",
+        "beermenus_slug": "",
+        "arryved_location_id": "",
+        "arryved_menu_id": "",
+        "arryved_manufacturer_name": "",
+        "arryved_serving_sizes": "[]",
+        "arryved_pos_menu_names": "[]"
     }
 }
 ]

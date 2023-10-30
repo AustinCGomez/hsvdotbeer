@@ -4,8 +4,7 @@ from django.db import migrations
 
 
 def forwards(apps, schema_editor):
-
-    venue_model = apps.get_model('venues.Venue')
+    venue_model = apps.get_model("venues.Venue")
     venue_model.objects.filter(id__in=[1, 3, 4, 7, 13, 14, 17]).update(
         on_downtown_craft_beer_trail=True,
     )
@@ -15,9 +14,8 @@ def forwards(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('venues', '0019_venue_on_downtown_craft_beer_trail'),
+        ("venues", "0019_venue_on_downtown_craft_beer_trail"),
     ]
 
     operations = [
